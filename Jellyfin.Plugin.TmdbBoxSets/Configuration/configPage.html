@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>TMDB Box Sets</title>
+</head>
+<body>
+<div id="TmdbBoxSetsConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-controller="__plugin/TmdbBoxSets/configPage.js">
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="TmdbBoxSetsConfigForm">
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input id="EnableAutomaticSync" name="EnableAutomaticSync" type="checkbox" is="emby-checkbox" />
+                        <span>Enable automatic sync</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        Sync box sets shortly after a movie is added or its metadata changes, in addition to the scheduled task.
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="AutomaticSyncDelaySeconds">Automatic sync delay (seconds)</label>
+                    <input id="AutomaticSyncDelaySeconds" name="AutomaticSyncDelaySeconds" type="number" is="emby-input" min="1" step="1" />
+                    <div class="fieldDescription">
+                        How long to wait after the last movie change before running an automatic sync.
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="MinimumMoviesInCollection">Minimum movies per collection</label>
+                    <input id="MinimumMoviesInCollection" name="MinimumMoviesInCollection" type="number" is="emby-input" min="1" step="1" />
+                    <div class="fieldDescription">
+                        A TMDB collection needs at least this many movies in your library before a box set is created.
+                    </div>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input id="StripCollectionSuffix" name="StripCollectionSuffix" type="checkbox" is="emby-checkbox" />
+                        <span>Strip "Collection" suffix from names</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        Only affects the placeholder name. Jellyfin's own TMDB provider may restore the full name on refresh.
+                    </div>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input id="RemoveOrphanedBoxSets" name="RemoveOrphanedBoxSets" type="checkbox" is="emby-checkbox" />
+                        <span>Remove orphaned box sets</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        Delete box sets managed by this plugin once their TMDB collection drops below the minimum. Box sets without a TMDB ID are never touched.
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="ExcludedTmdbCollectionIds">Excluded TMDB collection IDs</label>
+                    <input id="ExcludedTmdbCollectionIds" name="ExcludedTmdbCollectionIds" type="text" is="emby-input" />
+                    <div class="fieldDescription">
+                        Comma-separated TMDB collection IDs to ignore, for example: 10, 645
+                    </div>
+                </div>
+
+                <div>
+                    <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                        <span>Save</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        (function () {
+            var pluginId = '77260302-c13e-4bfc-9f11-58309ac46e7b';
+
+            document.querySelector('#TmdbBoxSetsConfigPage')
+                .addEventListener('pageshow', function () {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        document.querySelector('#EnableAutomaticSync').checked = config.EnableAutomaticSync;
+                        document.querySelector('#AutomaticSyncDelaySeconds').value = config.AutomaticSyncDelaySeconds;
+                        document.querySelector('#MinimumMoviesInCollection').value = config.MinimumMoviesInCollection;
+                        document.querySelector('#StripCollectionSuffix').checked = config.StripCollectionSuffix;
+                        document.querySelector('#RemoveOrphanedBoxSets').checked = config.RemoveOrphanedBoxSets;
+                        document.querySelector('#ExcludedTmdbCollectionIds').value = config.ExcludedTmdbCollectionIds || '';
+                        Dashboard.hideLoadingMsg();
+                    });
+                });
+
+            document.querySelector('#TmdbBoxSetsConfigForm')
+                .addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    Dashboard.showLoadingMsg();
+                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                        config.EnableAutomaticSync = document.querySelector('#EnableAutomaticSync').checked;
+                        config.AutomaticSyncDelaySeconds = parseInt(document.querySelector('#AutomaticSyncDelaySeconds').value, 10);
+                        config.MinimumMoviesInCollection = parseInt(document.querySelector('#MinimumMoviesInCollection').value, 10);
+                        config.StripCollectionSuffix = document.querySelector('#StripCollectionSuffix').checked;
+                        config.RemoveOrphanedBoxSets = document.querySelector('#RemoveOrphanedBoxSets').checked;
+                        config.ExcludedTmdbCollectionIds = document.querySelector('#ExcludedTmdbCollectionIds').value;
+                        ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
+                            Dashboard.processPluginConfigurationUpdateResult(result);
+                        });
+                    });
+                    return false;
+                });
+        })();
+    </script>
+</div>
+</body>
+</html>

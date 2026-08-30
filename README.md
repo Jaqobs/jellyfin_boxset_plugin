@@ -1,0 +1,77 @@
+# Jellyfin TMDB Box Sets
+
+Automatically creates and maintains Jellyfin box sets from the TMDB collections
+your movies belong to. A from-scratch replacement for the unmaintained official
+`jellyfin-plugin-tmdbboxsets`.
+
+Targets **Jellyfin 10.11.x** (`targetAbi` 10.11.0.0, `net9.0`).
+
+## How it works
+
+The plugin needs **no TMDB API key and makes no HTTP calls of its own**. It
+relies on two things the Jellyfin server already does:
+
+1. During a normal metadata refresh, the bundled TheMovieDb provider stores each
+   movie's TMDB collection ID as `MetadataProvider.TmdbCollection`.
+2. Jellyfin ships a TMDB metadata provider for `BoxSet` items that fills in the
+   name, overview and artwork for any box set tagged with a TMDB collection ID.
+
+So the plugin only has to:
+
+1. Group owned movies by their TMDB collection ID.
+2. Create a box set tagged with `ProviderIds["Tmdb"] = <collectionId>`.
+3. Add the movies to it.
+4. Queue one metadata refresh so core fills in the real name and artwork.
+
+Box sets **without** a TMDB provider ID are never touched, so hand-made
+collections are safe.
+
+## Configuration
+
+Dashboard → Plugins → TMDB Box Sets.
+
+| Setting | Default | Effect |
+| --- | --- | --- |
+| Enable automatic sync | on | Sync shortly after a movie is added or changes, in addition to the scheduled task. |
+| Automatic sync delay (seconds) | 15 | Debounce window after the last movie change. |
+| Minimum movies per collection | 2 | How many owned movies a collection needs before a box set is created. |
+| Strip "Collection" suffix | off | Trims a trailing "Collection" from the placeholder name. |
+| Remove orphaned box sets | off | Deletes managed box sets that fall below the minimum. |
+| Excluded TMDB collection IDs | empty | Comma-separated collection IDs to ignore. |
+
+A **Sync TMDB Box Sets** scheduled task (Library category) runs daily at 03:00
+and can be triggered manually from Dashboard → Scheduled Tasks.
+
+## Building
+
+Requires the .NET 9 SDK.
+
+```bash
+dotnet build -c Release
+```
+
+The build produces a single `Jellyfin.Plugin.TmdbBoxSets.dll`; the Jellyfin
+assemblies are reference-only and are supplied by the server at runtime.
+
+## Installing manually
+
+```bash
+dotnet build -c Release
+mkdir -p "<jellyfin-data-dir>/plugins/TMDB Box Sets_1.0.0.0"
+cp Jellyfin.Plugin.TmdbBoxSets/bin/Release/net9.0/Jellyfin.Plugin.TmdbBoxSets.dll \
+   "<jellyfin-data-dir>/plugins/TMDB Box Sets_1.0.0.0/"
+```
+
+Restart Jellyfin, then check Dashboard → Plugins.
+
+## Notes
+
+- The "strip Collection suffix" option only affects the placeholder name the
+  plugin sets at creation time. Core's TMDB box set provider may restore the
+  full official name on refresh.
+- The suffix regex matches the English word "Collection" only. Non-English
+  metadata may need additional patterns.
+
+## License
+
+GPL-3.0-only. See [LICENSE](LICENSE).

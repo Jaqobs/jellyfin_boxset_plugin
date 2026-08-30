@@ -1,0 +1,20 @@
+---
+name: "TMDB Box Sets"
+guid: "77260302-c13e-4bfc-9f11-58309ac46e7b"
+version: "1.0.0.0"
+targetAbi: "10.11.0.0"
+framework: "net9.0"
+owner: "jaqobs"
+category: "Metadata"
+license: "GPL-3.0-only"
+overview: "Automatically group movies into box sets by their TMDB collection."
+description: >
+  Groups movies by the TMDB collection ID that Jellyfin's own metadata refresh
+  already stores on each movie, then creates and maintains a matching box set.
+  Requires no TMDB API key of its own: the box set is tagged with the TMDB
+  collection ID so Jellyfin's built-in provider supplies the name, overview and
+  artwork.
+artifacts:
+  - "Jellyfin.Plugin.TmdbBoxSets.dll"
+changelog: >
+  Initial release.
