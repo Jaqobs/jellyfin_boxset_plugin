@@ -5,7 +5,7 @@
 </head>
 <body>
 <div id="TmdbBoxSetsConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
-     data-controller="__plugin/TmdbBoxSets/configPage.js">
+     data-require="emby-input,emby-button,emby-checkbox">
     <div data-role="content">
         <div class="content-primary">
             <form id="TmdbBoxSetsConfigForm">
@@ -75,20 +75,48 @@
     <script type="text/javascript">
         (function () {
             var pluginId = '77260302-c13e-4bfc-9f11-58309ac46e7b';
+            var page = document.querySelector('#TmdbBoxSetsConfigPage');
+            var loaded = false;
 
-            document.querySelector('#TmdbBoxSetsConfigPage')
-                .addEventListener('pageshow', function () {
-                    Dashboard.showLoadingMsg();
-                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-                        document.querySelector('#EnableAutomaticSync').checked = config.EnableAutomaticSync;
-                        document.querySelector('#AutomaticSyncDelaySeconds').value = config.AutomaticSyncDelaySeconds;
-                        document.querySelector('#MinimumMoviesInCollection').value = config.MinimumMoviesInCollection;
-                        document.querySelector('#StripCollectionSuffix').checked = config.StripCollectionSuffix;
-                        document.querySelector('#RemoveOrphanedBoxSets').checked = config.RemoveOrphanedBoxSets;
-                        document.querySelector('#ExcludedTmdbCollectionIds').value = config.ExcludedTmdbCollectionIds || '';
-                        Dashboard.hideLoadingMsg();
-                    });
+            function intOrDefault(selector, fallback) {
+                // An empty or non-numeric field would otherwise serialise to null
+                // and fail model binding on an int property server-side.
+                var parsed = parseInt(document.querySelector(selector).value, 10);
+                return isNaN(parsed) ? fallback : parsed;
+            }
+
+            function onFailure(err) {
+                // Without this the spinner from showLoadingMsg() never clears and
+                // the page looks frozen.
+                Dashboard.hideLoadingMsg();
+                console.error('[Box Sets] configuration error', err);
+                Dashboard.alert({
+                    title: 'Box Sets',
+                    message: 'Could not load or save the configuration. See the browser console for details.'
                 });
+            }
+
+            function loadConfiguration() {
+                if (loaded) {
+                    return;
+                }
+                loaded = true;
+                Dashboard.showLoadingMsg();
+                ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                    document.querySelector('#EnableAutomaticSync').checked = !!config.EnableAutomaticSync;
+                    document.querySelector('#AutomaticSyncDelaySeconds').value = config.AutomaticSyncDelaySeconds;
+                    document.querySelector('#MinimumMoviesInCollection').value = config.MinimumMoviesInCollection;
+                    document.querySelector('#StripCollectionSuffix').checked = !!config.StripCollectionSuffix;
+                    document.querySelector('#RemoveOrphanedBoxSets').checked = !!config.RemoveOrphanedBoxSets;
+                    document.querySelector('#ExcludedTmdbCollectionIds').value = config.ExcludedTmdbCollectionIds || '';
+                    Dashboard.hideLoadingMsg();
+                }).catch(onFailure);
+            }
+
+            // viewshow always fires; pageshow only when the view manager has page
+            // events enabled. Listening to both keeps this working either way.
+            page.addEventListener('viewshow', loadConfiguration);
+            page.addEventListener('pageshow', loadConfiguration);
 
             document.querySelector('#TmdbBoxSetsConfigForm')
                 .addEventListener('submit', function (e) {
@@ -96,15 +124,15 @@
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                         config.EnableAutomaticSync = document.querySelector('#EnableAutomaticSync').checked;
-                        config.AutomaticSyncDelaySeconds = parseInt(document.querySelector('#AutomaticSyncDelaySeconds').value, 10);
-                        config.MinimumMoviesInCollection = parseInt(document.querySelector('#MinimumMoviesInCollection').value, 10);
+                        config.AutomaticSyncDelaySeconds = intOrDefault('#AutomaticSyncDelaySeconds', 15);
+                        config.MinimumMoviesInCollection = intOrDefault('#MinimumMoviesInCollection', 2);
                         config.StripCollectionSuffix = document.querySelector('#StripCollectionSuffix').checked;
                         config.RemoveOrphanedBoxSets = document.querySelector('#RemoveOrphanedBoxSets').checked;
                         config.ExcludedTmdbCollectionIds = document.querySelector('#ExcludedTmdbCollectionIds').value;
-                        ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
-                            Dashboard.processPluginConfigurationUpdateResult(result);
-                        });
-                    });
+                        return ApiClient.updatePluginConfiguration(pluginId, config);
+                    }).then(function (result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                    }).catch(onFailure);
                     return false;
                 });
         })();
