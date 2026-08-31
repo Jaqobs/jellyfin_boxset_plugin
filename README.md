@@ -53,6 +53,19 @@ dotnet build -c Release
 The build produces a single `Jellyfin.Plugin.TmdbBoxSets.dll`; the Jellyfin
 assemblies are reference-only and are supplied by the server at runtime.
 
+## Installing from the plugin repository (recommended)
+
+In Jellyfin: **Dashboard -> Plugins -> Repositories -> +**, then add:
+
+| Field | Value |
+| --- | --- |
+| Repository Name | `Jaqobs Plugins` |
+| Repository URL | `https://raw.githubusercontent.com/Jaqobs/jellyfin_boxset_plugin/main/manifest.json` |
+
+Then go to **Catalogue**, find *TMDB Box Sets* under the Metadata section, and
+install it. Restart Jellyfin when prompted. Updates appear in the dashboard
+automatically once a new version is released.
+
 ## Installing manually
 
 ```bash
@@ -71,6 +84,24 @@ Restart Jellyfin, then check Dashboard → Plugins.
   full official name on refresh.
 - The suffix regex matches the English word "Collection" only. Non-English
   metadata may need additional patterns.
+
+## Releasing
+
+Releases are cut by pushing a tag; everything else is automated by
+`.github/workflows/release.yml`.
+
+```bash
+git tag v1.0.1.0
+git push origin v1.0.1.0
+```
+
+The workflow builds with the assembly version taken from the tag, zips the DLL
+at the archive root, creates a GitHub release with the zip attached, then
+regenerates `manifest.json` (including its MD5 checksum) and commits it back to
+`main`. Jellyfin clients pick the new version up from the repository URL above.
+
+Plugin identity lives in `build.yaml` and is the single source of truth for the
+manifest; `scripts/update_manifest.py` reads it rather than duplicating values.
 
 ## License
 

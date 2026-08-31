@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Build
+        run: dotnet build -c Release --warnaserror
+
+      - name: Test
+        run: |
+          # Runs the suite once test projects exist; stays green until then.
+          if grep -rlq "Microsoft.NET.Test.Sdk" --include="*.csproj" .; then
+            dotnet test -c Release --verbosity normal
+          else
+            echo "No test projects found; skipping."
+          fi
