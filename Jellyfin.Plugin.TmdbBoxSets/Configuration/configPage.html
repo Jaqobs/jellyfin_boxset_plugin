@@ -63,6 +63,68 @@
                     </div>
                 </div>
 
+                <h3 class="checkboxListLabel">TMDB metadata (optional)</h3>
+                <div class="fieldDescription" style="margin-bottom:1em;">
+                    Jellyfin's built-in TMDB provider normally supplies box set names and
+                    artwork. Fill these in only if your network blocks api.themoviedb.org,
+                    which leaves box sets named "TMDB Collection &lt;id&gt;" with no artwork.
+                    Note the image CDN (image.tmdb.org) is a separate host and is often
+                    still reachable.
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="TmdbApiKey">TMDB API key or v4 token</label>
+                    <input id="TmdbApiKey" name="TmdbApiKey" type="password" is="emby-input" autocomplete="off" />
+                    <div class="fieldDescription">
+                        Leave empty to disable direct lookups and use only Jellyfin's TMDB provider.
+                    </div>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input id="TmdbIsV4Token" name="TmdbIsV4Token" type="checkbox" is="emby-checkbox" />
+                        <span>The value above is a v4 read access token</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">
+                        Tick this for the long "eyJ..." token, which is sent as a bearer token
+                        instead of an api_key parameter.
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="TmdbProxyBaseUrl">TMDB proxy base URL</label>
+                    <input id="TmdbProxyBaseUrl" name="TmdbProxyBaseUrl" type="text" is="emby-input" />
+                    <div class="fieldDescription">
+                        Include the trailing "/3", e.g. https://example.workers.dev/3 . Leave empty to call TMDB directly.
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="TmdbProxySecret">Proxy shared secret</label>
+                    <input id="TmdbProxySecret" name="TmdbProxySecret" type="password" is="emby-input" autocomplete="off" />
+                    <div class="fieldDescription">Optional. Leave empty if the proxy needs no secret.</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="TmdbProxySecretHeader">Proxy secret header name</label>
+                    <input id="TmdbProxySecretHeader" name="TmdbProxySecretHeader" type="text" is="emby-input" />
+                    <div class="fieldDescription">
+                        Must match the header your proxy checks. Default: X-Proxy-Secret
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="MetadataLanguage">Metadata language</label>
+                    <input id="MetadataLanguage" name="MetadataLanguage" type="text" is="emby-input" />
+                    <div class="fieldDescription">TMDB language code, e.g. en-US</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="TmdbImageBaseUrl">TMDB image base URL</label>
+                    <input id="TmdbImageBaseUrl" name="TmdbImageBaseUrl" type="text" is="emby-input" />
+                    <div class="fieldDescription">Default: https://image.tmdb.org/t/p/original</div>
+                </div>
+
                 <div>
                     <button is="emby-button" type="submit" class="raised button-submit block emby-button">
                         <span>Save</span>
@@ -109,6 +171,13 @@
                     document.querySelector('#StripCollectionSuffix').checked = !!config.StripCollectionSuffix;
                     document.querySelector('#RemoveOrphanedBoxSets').checked = !!config.RemoveOrphanedBoxSets;
                     document.querySelector('#ExcludedTmdbCollectionIds').value = config.ExcludedTmdbCollectionIds || '';
+                    document.querySelector('#TmdbApiKey').value = config.TmdbApiKey || '';
+                    document.querySelector('#TmdbIsV4Token').checked = !!config.TmdbIsV4Token;
+                    document.querySelector('#TmdbProxyBaseUrl').value = config.TmdbProxyBaseUrl || '';
+                    document.querySelector('#TmdbProxySecret').value = config.TmdbProxySecret || '';
+                    document.querySelector('#TmdbProxySecretHeader').value = config.TmdbProxySecretHeader || '';
+                    document.querySelector('#MetadataLanguage').value = config.MetadataLanguage || '';
+                    document.querySelector('#TmdbImageBaseUrl').value = config.TmdbImageBaseUrl || '';
                     Dashboard.hideLoadingMsg();
                 }).catch(onFailure);
             }
@@ -129,6 +198,13 @@
                         config.StripCollectionSuffix = document.querySelector('#StripCollectionSuffix').checked;
                         config.RemoveOrphanedBoxSets = document.querySelector('#RemoveOrphanedBoxSets').checked;
                         config.ExcludedTmdbCollectionIds = document.querySelector('#ExcludedTmdbCollectionIds').value;
+                        config.TmdbApiKey = document.querySelector('#TmdbApiKey').value.trim();
+                        config.TmdbIsV4Token = document.querySelector('#TmdbIsV4Token').checked;
+                        config.TmdbProxyBaseUrl = document.querySelector('#TmdbProxyBaseUrl').value.trim();
+                        config.TmdbProxySecret = document.querySelector('#TmdbProxySecret').value.trim();
+                        config.TmdbProxySecretHeader = document.querySelector('#TmdbProxySecretHeader').value.trim();
+                        config.MetadataLanguage = document.querySelector('#MetadataLanguage').value.trim();
+                        config.TmdbImageBaseUrl = document.querySelector('#TmdbImageBaseUrl').value.trim();
                         return ApiClient.updatePluginConfiguration(pluginId, config);
                     }).then(function (result) {
                         Dashboard.processPluginConfigurationUpdateResult(result);

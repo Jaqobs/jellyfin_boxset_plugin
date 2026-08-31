@@ -29,6 +29,7 @@ public sealed partial class BoxSetSyncManager : IHostedService, IDisposable
     private readonly ICollectionManager _collectionManager;
     private readonly IProviderManager _providerManager;
     private readonly IFileSystem _fileSystem;
+    private readonly TmdbCollectionClient _tmdbClient;
     private readonly ILogger<BoxSetSyncManager> _logger;
 
     private readonly SemaphoreSlim _syncLock = new(1, 1);
@@ -44,18 +45,21 @@ public sealed partial class BoxSetSyncManager : IHostedService, IDisposable
     /// <param name="collectionManager">Instance of the <see cref="ICollectionManager"/> interface.</param>
     /// <param name="providerManager">Instance of the <see cref="IProviderManager"/> interface.</param>
     /// <param name="fileSystem">Instance of the <see cref="IFileSystem"/> interface.</param>
+    /// <param name="tmdbClient">Client used to look up collection metadata directly.</param>
     /// <param name="logger">Instance of the <see cref="ILogger{TCategoryName}"/> interface.</param>
     public BoxSetSyncManager(
         ILibraryManager libraryManager,
         ICollectionManager collectionManager,
         IProviderManager providerManager,
         IFileSystem fileSystem,
+        TmdbCollectionClient tmdbClient,
         ILogger<BoxSetSyncManager> logger)
     {
         _libraryManager = libraryManager;
         _collectionManager = collectionManager;
         _providerManager = providerManager;
         _fileSystem = fileSystem;
+        _tmdbClient = tmdbClient;
         _logger = logger;
     }
 
@@ -151,6 +155,7 @@ public sealed partial class BoxSetSyncManager : IHostedService, IDisposable
             if (boxSet is not null)
             {
                 await AddMissingMoviesAsync(boxSet, movies).ConfigureAwait(false);
+                await EnrichBoxSetAsync(boxSet, collectionId, config, cancellationToken).ConfigureAwait(false);
             }
 
             processed++;
@@ -310,6 +315,105 @@ public sealed partial class BoxSetSyncManager : IHostedService, IDisposable
             true);
     }
 
+    /// <summary>
+    /// Fills in name, overview and artwork straight from TMDB. This exists because
+    /// core's own TMDB box set provider cannot be pointed at a proxy, so on networks
+    /// that block api.themoviedb.org the placeholder name would stick forever.
+    /// Only runs when something is actually missing.
+    /// </summary>
+    private async Task EnrichBoxSetAsync(
+        BoxSet boxSet,
+        string collectionId,
+        PluginConfiguration config,
+        CancellationToken cancellationToken)
+    {
+        if (!TmdbCollectionClient.IsConfigured || !NeedsMetadata(boxSet, collectionId))
+        {
+            return;
+        }
+
+        var collection = await _tmdbClient.GetCollectionAsync(collectionId, cancellationToken).ConfigureAwait(false);
+        if (collection is null)
+        {
+            return;
+        }
+
+        var updated = false;
+
+        if (!string.IsNullOrWhiteSpace(collection.Name) && IsPlaceholderName(boxSet.Name, collectionId))
+        {
+            boxSet.Name = config.StripCollectionSuffix
+                ? CollectionSuffixRegex().Replace(collection.Name, string.Empty).Trim()
+                : collection.Name;
+            updated = true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(collection.Overview) && string.IsNullOrWhiteSpace(boxSet.Overview))
+        {
+            boxSet.Overview = collection.Overview;
+            updated = true;
+        }
+
+        if (updated)
+        {
+            _logger.LogInformation(
+                "Updated box set {Name} from TMDB collection {CollectionId}",
+                boxSet.Name,
+                collectionId);
+            await boxSet.UpdateToRepositoryAsync(ItemUpdateType.MetadataEdit, cancellationToken).ConfigureAwait(false);
+        }
+
+        await SaveImageAsync(boxSet, ImageType.Primary, collection.PosterPath, cancellationToken).ConfigureAwait(false);
+        await SaveImageAsync(boxSet, ImageType.Backdrop, collection.BackdropPath, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task SaveImageAsync(
+        BoxSet boxSet,
+        ImageType imageType,
+        string? imagePath,
+        CancellationToken cancellationToken)
+    {
+        if (boxSet.HasImage(imageType, 0))
+        {
+            return;
+        }
+
+        var url = TmdbCollectionClient.BuildImageUrl(imagePath);
+        if (url is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _providerManager
+                .SaveImage(boxSet, url, imageType, null, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Artwork is best-effort; a CDN failure must not abort the sync.
+            _logger.LogWarning(
+                ex,
+                "Could not save {ImageType} artwork for box set {Name}",
+                imageType,
+                boxSet.Name);
+        }
+    }
+
+    private static bool NeedsMetadata(BoxSet boxSet, string collectionId)
+        => IsPlaceholderName(boxSet.Name, collectionId)
+           || string.IsNullOrWhiteSpace(boxSet.Overview)
+           || !boxSet.HasImage(ImageType.Primary, 0)
+           || !boxSet.HasImage(ImageType.Backdrop, 0);
+
+    private static bool IsPlaceholderName(string? name, string collectionId)
+        => string.IsNullOrWhiteSpace(name)
+           || string.Equals(name, FormatPlaceholderName(collectionId), StringComparison.Ordinal);
+
+    private static string FormatPlaceholderName(string collectionId)
+        => string.Format(CultureInfo.InvariantCulture, "TMDB Collection {0}", collectionId);
+
     private static string BuildPlaceholderName(
         string collectionId,
         IReadOnlyList<Movie> movies,
@@ -321,8 +425,9 @@ public sealed partial class BoxSetSyncManager : IHostedService, IDisposable
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            // Core's TMDB box set provider will overwrite this on the queued refresh.
-            return string.Format(CultureInfo.InvariantCulture, "TMDB Collection {0}", collectionId);
+            // Replaced later by EnrichBoxSetAsync, or by core's own TMDB box set
+            // provider on the queued refresh, whichever can reach TMDB.
+            return FormatPlaceholderName(collectionId);
         }
 
         return stripSuffix ? CollectionSuffixRegex().Replace(name, string.Empty).Trim() : name;

@@ -39,6 +39,33 @@ Dashboard → Plugins → Box Sets.
 | Remove orphaned box sets | off | Deletes managed box sets that fall below the minimum. |
 | Excluded TMDB collection IDs | empty | Comma-separated collection IDs to ignore. |
 
+### TMDB metadata (optional)
+
+Only needed when your network blocks `api.themoviedb.org`. Jellyfin's built-in
+TMDB provider cannot be pointed at a proxy (it constructs `TMDbClient` with no
+base-URL override), so on a blocked network box sets keep the placeholder name
+`TMDB Collection <id>` and get no artwork. Filling these in lets the plugin
+fetch collection details itself.
+
+| Setting | Default | Effect |
+| --- | --- | --- |
+| TMDB API key or v4 token | empty | Empty disables direct lookups entirely. |
+| Value is a v4 token | off | Sends the key as a bearer token instead of `api_key`. |
+| TMDB proxy base URL | empty | Include the trailing `/3`. Empty calls TMDB directly. |
+| Proxy shared secret | empty | Optional, sent as a header. |
+| Proxy secret header name | `X-Proxy-Secret` | Must match what your proxy checks. |
+| Metadata language | `en-US` | Language requested from TMDB. |
+| TMDB image base URL | `https://image.tmdb.org/t/p/original` | Artwork host. |
+
+Lookups run **only when something is missing** — a placeholder name, an empty
+overview, or absent artwork — so repeated syncs cost no API calls once a box set
+is complete.
+
+Note the image CDN is a *different host* from the API and is frequently still
+reachable when the API is blocked, so artwork usually works as soon as the
+plugin can read the image paths.
+
+
 A **Sync Box Sets** scheduled task (Library category) runs daily at 03:00
 and can be triggered manually from Dashboard → Scheduled Tasks.
 

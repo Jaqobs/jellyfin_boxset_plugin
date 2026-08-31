@@ -41,4 +41,46 @@ public class PluginConfiguration : BasePluginConfiguration
     /// change and the automatic sync it triggers.
     /// </summary>
     public int AutomaticSyncDelaySeconds { get; set; } = 15;
+
+    /// <summary>
+    /// Gets or sets the TMDB v3 API key, or the v4 read access token when
+    /// <see cref="TmdbIsV4Token"/> is set. Leave empty to disable direct metadata
+    /// lookups and rely solely on Jellyfin's own TMDB provider.
+    /// </summary>
+    public string TmdbApiKey { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether <see cref="TmdbApiKey"/> is a v4 read
+    /// access token (the long "eyJ..." JWT) and must be sent as a bearer token.
+    /// </summary>
+    public bool TmdbIsV4Token { get; set; }
+
+    /// <summary>
+    /// Gets or sets the base URL used for TMDB API calls, including the trailing
+    /// "/3" path segment. Leave empty to call TMDB directly. Set this to a proxy
+    /// when the network blocks api.themoviedb.org.
+    /// </summary>
+    public string TmdbProxyBaseUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets an optional shared secret sent with every proxied request.
+    /// </summary>
+    public string TmdbProxySecret { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the header name carrying <see cref="TmdbProxySecret"/>. This must
+    /// match whatever the proxy expects.
+    /// </summary>
+    public string TmdbProxySecretHeader { get; set; } = "X-Proxy-Secret";
+
+    /// <summary>
+    /// Gets or sets the language requested from TMDB for collection metadata.
+    /// </summary>
+    public string MetadataLanguage { get; set; } = "en-US";
+
+    /// <summary>
+    /// Gets or sets the base URL for TMDB artwork. The image CDN is a separate host
+    /// from the API and is often reachable when the API is not.
+    /// </summary>
+    public string TmdbImageBaseUrl { get; set; } = "https://image.tmdb.org/t/p/original";
 }

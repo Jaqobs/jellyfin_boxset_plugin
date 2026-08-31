@@ -17,6 +17,7 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
     {
         // A single instance backs both the library-event listener and the scheduled task
         // so the two share one sync lock and never overlap.
+        serviceCollection.AddSingleton<TmdbCollectionClient>();
         serviceCollection.AddSingleton<BoxSetSyncManager>();
         serviceCollection.AddSingleton<IHostedService>(
             provider => provider.GetRequiredService<BoxSetSyncManager>());
