@@ -8,6 +8,14 @@
     "category": "MoviesAndShows",
     "versions": [
       {
+        "version": "1.1.0.0",
+        "changelog": "Release v1.1.0.0",
+        "targetAbi": "10.11.0.0",
+        "sourceUrl": "https://github.com/Jaqobs/jellyfin_boxset_plugin/releases/download/v1.1.0.0/tmdb-boxsets_1.1.0.0.zip",
+        "checksum": "31aeb05b3a1649ef03fcbeecc2977c24",
+        "timestamp": "2026-08-31T09:41:20Z"
+      },
+      {
         "version": "1.0.2.0",
         "changelog": "Release v1.0.2.0",
         "targetAbi": "10.11.0.0",
