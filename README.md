@@ -53,7 +53,7 @@ fetch collection details itself.
 | Value is a v4 token | off | Sends the key as a bearer token instead of `api_key`. |
 | TMDB proxy base URL | empty | Include the trailing `/3`. Empty calls TMDB directly. |
 | Proxy shared secret | empty | Optional, sent as a header. |
-| Proxy secret header name | `X-Proxy-Secret` | Must match what your proxy checks. |
+| Proxy secret header name | `X-Proxy-Auth` | Must match what your proxy checks. |
 | Metadata language | `en-US` | Language requested from TMDB. |
 | TMDB image base URL | `https://image.tmdb.org/t/p/original` | Artwork host. |
 

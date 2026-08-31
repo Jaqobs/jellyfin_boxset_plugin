@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -120,10 +121,18 @@ public sealed class TmdbCollectionClient
             {
                 // Deliberately logs only the status and collection ID: the URL carries
                 // the API key when using a v3 key.
+                var hint = response.StatusCode switch
+                {
+                    HttpStatusCode.Unauthorized => " - check the API key, and whether it needs the v4 token option",
+                    HttpStatusCode.Forbidden => " - check the proxy shared secret and its header name",
+                    _ => string.Empty
+                };
+
                 _logger.LogWarning(
-                    "TMDB lookup for collection {CollectionId} returned {StatusCode}",
+                    "TMDB lookup for collection {CollectionId} returned {StatusCode}{Hint}",
                     collectionId,
-                    (int)response.StatusCode);
+                    (int)response.StatusCode,
+                    hint);
                 return null;
             }
 

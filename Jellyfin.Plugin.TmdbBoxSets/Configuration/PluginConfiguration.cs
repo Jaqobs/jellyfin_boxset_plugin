@@ -71,7 +71,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the header name carrying <see cref="TmdbProxySecret"/>. This must
     /// match whatever the proxy expects.
     /// </summary>
-    public string TmdbProxySecretHeader { get; set; } = "X-Proxy-Secret";
+    public string TmdbProxySecretHeader { get; set; } = "X-Proxy-Auth";
 
     /// <summary>
     /// Gets or sets the language requested from TMDB for collection metadata.
