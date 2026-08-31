@@ -1,4 +1,4 @@
-# Jellyfin TMDB Box Sets
+# Jellyfin Box Sets
 
 Automatically creates and maintains Jellyfin box sets from the TMDB collections
 your movies belong to. A from-scratch replacement for the unmaintained official
@@ -28,7 +28,7 @@ collections are safe.
 
 ## Configuration
 
-Dashboard → Plugins → TMDB Box Sets.
+Dashboard → Plugins → Box Sets.
 
 | Setting | Default | Effect |
 | --- | --- | --- |
@@ -39,7 +39,7 @@ Dashboard → Plugins → TMDB Box Sets.
 | Remove orphaned box sets | off | Deletes managed box sets that fall below the minimum. |
 | Excluded TMDB collection IDs | empty | Comma-separated collection IDs to ignore. |
 
-A **Sync TMDB Box Sets** scheduled task (Library category) runs daily at 03:00
+A **Sync Box Sets** scheduled task (Library category) runs daily at 03:00
 and can be triggered manually from Dashboard → Scheduled Tasks.
 
 ## Building
@@ -62,7 +62,7 @@ In Jellyfin: **Dashboard -> Plugins -> Repositories -> +**, then add:
 | Repository Name | `Jaqobs Plugins` |
 | Repository URL | `https://raw.githubusercontent.com/Jaqobs/jellyfin_boxset_plugin/main/manifest.json` |
 
-Then go to **Catalogue**, find *TMDB Box Sets* under the Metadata section, and
+Then go to **Catalogue**, find *Box Sets* under the **Movies and Shows** section, and
 install it. Restart Jellyfin when prompted. Updates appear in the dashboard
 automatically once a new version is released.
 
@@ -70,9 +70,9 @@ automatically once a new version is released.
 
 ```bash
 dotnet build -c Release
-mkdir -p "<jellyfin-data-dir>/plugins/TMDB Box Sets_1.0.0.0"
+mkdir -p "<jellyfin-data-dir>/plugins/Box Sets_1.0.1.0"
 cp Jellyfin.Plugin.TmdbBoxSets/bin/Release/net9.0/Jellyfin.Plugin.TmdbBoxSets.dll \
-   "<jellyfin-data-dir>/plugins/TMDB Box Sets_1.0.0.0/"
+   "<jellyfin-data-dir>/plugins/Box Sets_1.0.1.0/"
 ```
 
 Restart Jellyfin, then check Dashboard → Plugins.

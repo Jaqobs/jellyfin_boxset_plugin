@@ -38,16 +38,19 @@ def version_key(value: str) -> tuple:
 
 def build_package(meta: dict, versions: list) -> dict:
     """Shape a PackageInfo entry exactly as MediaBrowser.Model.Updates expects."""
-    return {
+    package = {
         "guid": str(meta["guid"]),
         "name": meta["name"],
         "description": (meta.get("description") or "").strip(),
         "overview": (meta.get("overview") or "").strip(),
         "owner": meta.get("owner", ""),
         "category": meta.get("category", "General"),
-        "imageUrl": meta.get("imageUrl"),
         "versions": versions,
     }
+    # Only emit imageUrl when there is one, matching the official repo's shape.
+    if meta.get("imageUrl"):
+        package["imageUrl"] = meta["imageUrl"]
+    return package
 
 
 def main() -> int:
@@ -87,14 +90,19 @@ def main() -> int:
             manifest = json.loads(content)
 
     guid = str(meta["guid"])
-    package = next((p for p in manifest if str(p.get("guid", "")).lower() == guid.lower()), None)
+    index = next(
+        (i for i, p in enumerate(manifest) if str(p.get("guid", "")).lower() == guid.lower()),
+        None,
+    )
+    existing_versions = manifest[index].get("versions", []) if index is not None else []
 
-    if package is None:
-        package = build_package(meta, [])
+    # Rebuild the entry outright rather than merging, so renames and dropped
+    # fields propagate instead of lingering from the previous release.
+    package = build_package(meta, existing_versions)
+    if index is None:
         manifest.append(package)
     else:
-        # Refresh descriptive fields so manifest edits only ever need build.yaml.
-        package.update(build_package(meta, package.get("versions", [])))
+        manifest[index] = package
 
     versions = [v for v in package["versions"] if v.get("version") != args.version]
     versions.append(entry)

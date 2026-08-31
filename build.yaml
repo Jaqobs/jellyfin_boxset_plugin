@@ -1,11 +1,11 @@
 ---
-name: "TMDB Box Sets"
+name: "Box Sets"
 guid: "77260302-c13e-4bfc-9f11-58309ac46e7b"
 version: "1.0.0.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 owner: "jaqobs"
-category: "Metadata"
+category: "MoviesAndShows"
 license: "GPL-3.0-only"
 overview: "Automatically group movies into box sets by their TMDB collection."
 description: >

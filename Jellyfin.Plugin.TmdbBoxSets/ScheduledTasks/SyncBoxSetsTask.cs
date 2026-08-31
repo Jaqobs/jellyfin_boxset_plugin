@@ -23,7 +23,7 @@ public class SyncBoxSetsTask : IScheduledTask
     }
 
     /// <inheritdoc />
-    public string Name => "Sync TMDB Box Sets";
+    public string Name => "Sync Box Sets";
 
     /// <inheritdoc />
     public string Key => "TmdbBoxSetsSync";

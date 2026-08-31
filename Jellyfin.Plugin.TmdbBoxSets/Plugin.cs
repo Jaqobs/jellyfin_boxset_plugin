@@ -32,7 +32,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public static Plugin? Instance { get; private set; }
 
     /// <inheritdoc />
-    public override string Name => "TMDB Box Sets";
+    public override string Name => "Box Sets";
 
     /// <inheritdoc />
     public override string Description =>
