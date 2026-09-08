@@ -4,7 +4,11 @@ Automatically creates and maintains Jellyfin box sets from the TMDB collections
 your movies belong to. A from-scratch replacement for the unmaintained official
 `jellyfin-plugin-tmdbboxsets`.
 
-Targets **Jellyfin 10.11.x** (`targetAbi` 10.11.0.0, `net9.0`).
+Targets **Jellyfin 12.0** (`targetAbi` 12.0.0.0, `net10.0`).
+
+> Jellyfin 12 made collections relational, so membership is read through
+> `ILinkedChildrenService` rather than `BoxSet.LinkedChildren`. Versions 1.x of
+> this plugin targeted 10.11 and are no longer published; do not run them on 12.0.
 
 ## How it works
 
@@ -71,7 +75,7 @@ and can be triggered manually from Dashboard → Scheduled Tasks.
 
 ## Building
 
-Requires the .NET 9 SDK.
+Requires the .NET 10 SDK.
 
 ```bash
 dotnet build -c Release
@@ -97,9 +101,9 @@ automatically once a new version is released.
 
 ```bash
 dotnet build -c Release
-mkdir -p "<jellyfin-data-dir>/plugins/Box Sets_1.0.1.0"
-cp Jellyfin.Plugin.TmdbBoxSets/bin/Release/net9.0/Jellyfin.Plugin.TmdbBoxSets.dll \
-   "<jellyfin-data-dir>/plugins/Box Sets_1.0.1.0/"
+mkdir -p "<jellyfin-data-dir>/plugins/Box Sets_2.0.0.0"
+cp Jellyfin.Plugin.TmdbBoxSets/bin/Release/net10.0/Jellyfin.Plugin.TmdbBoxSets.dll \
+   "<jellyfin-data-dir>/plugins/Box Sets_2.0.0.0/"
 ```
 
 Restart Jellyfin, then check Dashboard → Plugins.
@@ -118,8 +122,8 @@ Releases are cut by pushing a tag; everything else is automated by
 `.github/workflows/release.yml`.
 
 ```bash
-git tag v1.0.1.0
-git push origin v1.0.1.0
+git tag v2.0.1.0
+git push origin v2.0.1.0
 ```
 
 The workflow builds with the assembly version taken from the tag, zips the DLL

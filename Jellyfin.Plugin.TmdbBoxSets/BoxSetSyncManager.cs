@@ -11,6 +11,7 @@ using MediaBrowser.Controller.Collections;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Controller.Persistence;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
@@ -30,6 +31,7 @@ public sealed partial class BoxSetSyncManager : IHostedService, IDisposable
     private readonly IProviderManager _providerManager;
     private readonly IFileSystem _fileSystem;
     private readonly TmdbCollectionClient _tmdbClient;
+    private readonly ILinkedChildrenService _linkedChildrenService;
     private readonly ILogger<BoxSetSyncManager> _logger;
 
     private readonly SemaphoreSlim _syncLock = new(1, 1);
@@ -46,6 +48,7 @@ public sealed partial class BoxSetSyncManager : IHostedService, IDisposable
     /// <param name="providerManager">Instance of the <see cref="IProviderManager"/> interface.</param>
     /// <param name="fileSystem">Instance of the <see cref="IFileSystem"/> interface.</param>
     /// <param name="tmdbClient">Client used to look up collection metadata directly.</param>
+    /// <param name="linkedChildrenService">Instance of the <see cref="ILinkedChildrenService"/> interface.</param>
     /// <param name="logger">Instance of the <see cref="ILogger{TCategoryName}"/> interface.</param>
     public BoxSetSyncManager(
         ILibraryManager libraryManager,
@@ -53,6 +56,7 @@ public sealed partial class BoxSetSyncManager : IHostedService, IDisposable
         IProviderManager providerManager,
         IFileSystem fileSystem,
         TmdbCollectionClient tmdbClient,
+        ILinkedChildrenService linkedChildrenService,
         ILogger<BoxSetSyncManager> logger)
     {
         _libraryManager = libraryManager;
@@ -60,6 +64,7 @@ public sealed partial class BoxSetSyncManager : IHostedService, IDisposable
         _providerManager = providerManager;
         _fileSystem = fileSystem;
         _tmdbClient = tmdbClient;
+        _linkedChildrenService = linkedChildrenService;
         _logger = logger;
     }
 
@@ -283,8 +288,15 @@ public sealed partial class BoxSetSyncManager : IHostedService, IDisposable
 
     private async Task AddMissingMoviesAsync(BoxSet boxSet, IReadOnlyList<Movie> movies)
     {
+        // Query the link table rather than BoxSet.ContainsLinkedChildByItemId. Since
+        // collections became relational, a BoxSet handed back by the library manager
+        // can carry an unhydrated LinkedChildren array, where empty means "unknown"
+        // rather than "no children" - which would make every movie look missing and
+        // get re-added on every sync.
+        var existing = _linkedChildrenService.GetLinkedChildrenIds(boxSet.Id).ToHashSet();
+
         var missing = movies
-            .Where(movie => !boxSet.ContainsLinkedChildByItemId(movie.Id))
+            .Where(movie => !existing.Contains(movie.Id))
             .Select(movie => movie.Id)
             .ToList();
 

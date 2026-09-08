@@ -17,7 +17,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Resolve version from tag
         id: meta
@@ -43,10 +43,17 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts
+          # Target framework comes from build.yaml so it cannot drift from the
+          # project when the plugin is retargeted to a new Jellyfin ABI.
+          FRAMEWORK=$(grep -E '^framework:' build.yaml | sed -E 's/^framework:[[:space:]]*"?([^"]+)"?/\1/')
+          DLL="Jellyfin.Plugin.TmdbBoxSets/bin/Release/$FRAMEWORK/Jellyfin.Plugin.TmdbBoxSets.dll"
+          if [ ! -f "$DLL" ]; then
+            echo "::error::Built DLL not found at $DLL (framework '$FRAMEWORK' from build.yaml)" >&2
+            exit 1
+          fi
           # The DLL must sit at the zip root: Jellyfin extracts the archive
           # straight into the plugin directory.
-          zip -j "artifacts/${{ steps.meta.outputs.zip_name }}" \
-            Jellyfin.Plugin.TmdbBoxSets/bin/Release/net9.0/Jellyfin.Plugin.TmdbBoxSets.dll
+          zip -j "artifacts/${{ steps.meta.outputs.zip_name }}" "$DLL"
           unzip -l "artifacts/${{ steps.meta.outputs.zip_name }}"
 
       - name: Create GitHub release
