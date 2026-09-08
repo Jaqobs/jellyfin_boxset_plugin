@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "guid": "77260302-c13e-4bfc-9f11-58309ac46e7b",
+    "name": "Box Sets",
+    "description": "Groups movies by the TMDB collection ID that Jellyfin's own metadata refresh already stores on each movie, then creates and maintains a matching box set. Requires no TMDB API key of its own: the box set is tagged with the TMDB collection ID so Jellyfin's built-in provider supplies the name, overview and artwork.",
+    "overview": "Automatically group movies into box sets by their TMDB collection.",
+    "owner": "jaqobs",
+    "category": "MoviesAndShows",
+    "versions": [
+      {
+        "version": "2.0.0.0",
+        "changelog": "Release v2.0.0.0",
+        "targetAbi": "12.0.0.0",
+        "sourceUrl": "https://github.com/Jaqobs/jellyfin_boxset_plugin/releases/download/v2.0.0.0/tmdb-boxsets_2.0.0.0.zip",
+        "checksum": "e64dca16cfdec9d39e9a092cebb61254",
+        "timestamp": "2026-09-08T14:49:59Z"
+      }
+    ]
+  }
+]
